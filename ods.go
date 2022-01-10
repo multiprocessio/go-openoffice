@@ -12,24 +12,24 @@ import (
 	"strings"
 )
 
-type Doc struct {
-	XMLName xml.Name `xml:"document-content"`
-	Sheets  []Sheet  `xml:"body>spreadsheet>table"`
+type ODSDoc struct {
+	XMLName xml.Name   `xml:"document-content"`
+	Sheets  []ODSSheet `xml:"body>spreadsheet>table"`
 }
 
-type Sheet struct {
+type ODSSheet struct {
 	Name   string   `xml:"name,attr"`
 	Column []string `xml:"table-column"`
-	Rows   []Row    `xml:"table-row"`
+	Rows   []ODSRow `xml:"table-row"`
 }
 
-type Row struct {
+type ODSRow struct {
 	RepeatedRows int `xml:"number-rows-repeated,attr"`
 
-	Cells []Cell `xml:",any"` // use ",any" to match table-cell and covered-table-cell
+	Cells []ODSCell `xml:",any"` // use ",any" to match table-cell and covered-table-cell
 }
 
-func (r *Row) IsEmpty() bool {
+func (r *ODSRow) IsEmpty() bool {
 	for _, c := range r.Cells {
 		if !c.IsEmpty() {
 			return false
@@ -40,7 +40,7 @@ func (r *Row) IsEmpty() bool {
 
 // Return the contents of a row as a slice of strings. Cells that are
 // covered by other cells will appear as empty strings.
-func (r *Row) Strings(b *bytes.Buffer) (row []string) {
+func (r *ODSRow) Strings(b *bytes.Buffer) (row []string) {
 	n := len(r.Cells)
 	if n == 0 {
 		return
@@ -86,7 +86,7 @@ func (r *Row) Strings(b *bytes.Buffer) (row []string) {
 	return
 }
 
-type Cell struct {
+type ODSCell struct {
 	XMLName xml.Name
 
 	// attributes
@@ -96,10 +96,10 @@ type Cell struct {
 	RepeatedCols int    `xml:"number-columns-repeated,attr"`
 	ColSpan      int    `xml:"number-columns-spanned,attr"`
 
-	P []Par `xml:"p"`
+	P []ODSPar `xml:"p"`
 }
 
-func (c *Cell) IsEmpty() (empty bool) {
+func (c *ODSCell) IsEmpty() (empty bool) {
 	switch len(c.P) {
 	case 0:
 		empty = true
@@ -114,7 +114,7 @@ func (c *Cell) IsEmpty() (empty bool) {
 // PlainText extracts the text from a cell. Space tags (<text:s text:c="#">)
 // are recognized. Inline elements (like span) are ignored, but the
 // text they contain is preserved
-func (c *Cell) PlainText(b *bytes.Buffer) string {
+func (c *ODSCell) PlainText(b *bytes.Buffer) string {
 	n := len(c.P)
 	if n == 1 {
 		return c.P[0].PlainText(b)
@@ -132,11 +132,11 @@ func (c *Cell) PlainText(b *bytes.Buffer) string {
 	return b.String()
 }
 
-type Par struct {
+type ODSPar struct {
 	XML string `xml:",innerxml"`
 }
 
-func (p *Par) PlainText(b *bytes.Buffer) string {
+func (p *ODSPar) PlainText(b *bytes.Buffer) string {
 	for i := range p.XML {
 		if p.XML[i] == '<' || p.XML[i] == '&' {
 			b.Reset()
@@ -146,7 +146,7 @@ func (p *Par) PlainText(b *bytes.Buffer) string {
 	}
 	return p.XML
 }
-func (p *Par) writePlainText(b *bytes.Buffer) {
+func (p *ODSPar) writePlainText(b *bytes.Buffer) {
 	for i := range p.XML {
 		if p.XML[i] == '<' || p.XML[i] == '&' {
 			goto decode
@@ -182,13 +182,13 @@ decode:
 	}
 }
 
-func (t *Sheet) Width() int {
+func (t *ODSSheet) Width() int {
 	return len(t.Column)
 }
-func (t *Sheet) Height() int {
+func (t *ODSSheet) Height() int {
 	return len(t.Rows)
 }
-func (t *Sheet) Strings() (s [][]string) {
+func (t *ODSSheet) Strings() (s [][]string) {
 	var b bytes.Buffer
 
 	n := len(t.Rows)
@@ -265,7 +265,7 @@ func newODSFile(f *ODFFile) (*ODSFile, error) {
 // Parse the content.xml part of an ODS file. On Success
 // the returned Doc will contain the data of the rows and cells
 // of the table(s) contained in the ODS file.
-func (f *ODSFile) ParseContent() (*Doc, error) {
+func (f *ODSFile) ParseContent() (*ODSDoc, error) {
 	content, err := f.Open("content.xml")
 	if err != nil {
 		return nil, err
@@ -273,7 +273,7 @@ func (f *ODSFile) ParseContent() (*Doc, error) {
 	defer content.Close()
 
 	d := xml.NewDecoder(content)
-	var doc Doc
+	var doc ODSDoc
 	err = d.Decode(&doc)
 	return &doc, err
 }
