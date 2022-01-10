@@ -1,3 +1,3 @@
-module github.com/multiprocessio/go-ods
+module github.com/multiprocessio/go-openoffice
 
 go 1.16
