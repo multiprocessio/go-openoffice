@@ -16,6 +16,6 @@ jobs:
       with:
         ref: ${{ github.ref }}
     - run: go build && go build ./ods
-    - run: go test -race ./...
-    - run: gofmt -ws ./...
+    - run: go test -race -cover
+    - run: gofmt -w -s .
     - run: ./scripts/fail_on_diff.sh

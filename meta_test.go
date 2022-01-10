@@ -1,29 +1,22 @@
 package openoffice
 
 import (
-	"fmt"
-	"os"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
 )
 
-func ExampleMetaTitle() {
+func TestODFFile_Meta(t *testing.T) {
 	f, err := OpenODF("./testdata/test.ods")
-	if err != nil {
-		fmt.Fprintln(os.Stderr, err)
-		return
-	}
+	assert.Nil(t, err)
 	defer f.Close()
 
 	m, err := f.Meta()
-	if err != nil {
-		fmt.Fprintln(os.Stderr, err)
-		return
-	}
-	t, _ := m.Meta.CreationDate.Time()
-	fmt.Println(m.Meta.Title, t.Format("(2006-01-02)"))
+	assert.Nil(t, err)
 
-	// Output: Test Spreadsheet for odf/ods package (2012-01-10)
-}
+	time, err := m.Meta.CreationDate.Time()
+	assert.Nil(t, err)
 
-func TestDummy(_ *testing.T) {
+	assert.Equal(t, time.Format("2006-01-02"), "2012-01-10")
+	assert.Equal(t, m.Meta.Title, "Test Spreadsheet for odf/ods package")
 }

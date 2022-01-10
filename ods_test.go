@@ -1,63 +1,41 @@
 package openoffice
 
 import (
-	"fmt"
-	"os"
-	"strconv"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
 )
 
-func ExampleParseContent() {
-	var doc Doc
-
+func TestODSFile_ParseContent(t *testing.T) {
 	f, err := OpenODS("./testdata/test.ods")
-	if err != nil {
-		fmt.Fprintln(os.Stderr, err)
-		return
-	}
+	assert.Nil(t, err)
 	defer f.Close()
-	if err := f.ParseContent(&doc); err != nil {
-		fmt.Fprintln(os.Stderr, err)
-		return
+
+	doc, err := f.ParseContent()
+	assert.Nil(t, err)
+
+	expected := [][]string{
+		{"A", "1", "A cell containing\nmore than one line."},
+		{"B", "foo"},
+		{"", "4", "quote\"quote"},
+		{"14.01.12"},
+		{},
+		{"cell spanning two columns", ""},
+		{},
+		{},
+		{"aaa", "cell spanning two rows", "ccc"},
+		{"aa", "", "cc"},
+		{},
+		{"same content", "same content", "same content"},
+		{},
+		{"same content"},
+		{"same content"},
+		{"same content"},
+		{},
+		{"Cell with inline styles"},
 	}
 
-	// Dump the first table one line per row, writing
-	// tab separated, quoted fields.
-	if len(doc.Table) > 0 {
-		for _, row := range doc.Table[0].Strings() {
-			if len(row) == 0 {
-				fmt.Println("-")
-				continue
-			}
-			sep := ""
-			for _, field := range row {
-				fmt.Print(sep, strconv.Quote(field))
-				sep = "\t"
-			}
-			fmt.Print("\n")
-		}
+	for i, row := range doc.Table[0].Strings() {
+		assert.Equal(t, row, expected[i])
 	}
-	// Output:
-	// "A"	"1"	"A cell containing\nmore than one line."
-	// "B"	"foo"
-	// ""	"4"	"quote\"quote"
-	// "14.01.12"
-	// -
-	// "cell spanning two columns"	""
-	// -
-	// -
-	// "aaa"	"cell spanning two rows"	"ccc"
-	// "aa"	""	"cc"
-	// -
-	// "same content"	"same content"	"same content"
-	// -
-	// "same content"
-	// "same content"
-	// "same content"
-	// -
-	// "Cell with inline styles"
-}
-
-func TestDummy(_ *testing.T) {
-
 }

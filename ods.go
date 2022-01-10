@@ -265,14 +265,15 @@ func newODSFile(f *ODFFile) (*ODSFile, error) {
 // Parse the content.xml part of an ODS file. On Success
 // the returned Doc will contain the data of the rows and cells
 // of the table(s) contained in the ODS file.
-func (f *ODSFile) ParseContent(doc *Doc) (err error) {
+func (f *ODSFile) ParseContent() (*Doc, error) {
 	content, err := f.Open("content.xml")
 	if err != nil {
-		return
+		return nil, err
 	}
 	defer content.Close()
 
 	d := xml.NewDecoder(content)
-	err = d.Decode(doc)
-	return
+	var doc Doc
+	err = d.Decode(&doc)
+	return &doc, err
 }
