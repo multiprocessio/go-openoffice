@@ -1,11 +1,3 @@
-# go-openoffice
-
-A Go library for reading OpenOffice/LibreOffice .ods (and .odf) files.
-
-## Example
-
-```go
-$ cat ./examples/dump/main.go
 package main
 
 import "fmt"
@@ -33,8 +25,3 @@ func main() {
 		fmt.Println()
 	}
 }
-```
-
-## History
-
-This project is a fork of https://github.com/knieriem/odf.

@@ -1,4 +1,4 @@
-package odf
+package openoffice
 
 import (
 	"encoding/xml"
@@ -56,7 +56,7 @@ func (s Time) Time() (t time.Time, err error) {
 	return time.Parse(ISO8601, string(s))
 }
 
-func (f *File) Meta() (docMeta *DocumentMeta, err error) {
+func (f *ODFFile) Meta() (docMeta *DocumentMeta, err error) {
 	var dm DocumentMeta
 
 	mf, err := f.Open("meta.xml")

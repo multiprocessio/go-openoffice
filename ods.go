@@ -1,13 +1,12 @@
 // This package implements rudimentary support
 // for reading Open Document Spreadsheet files. At current
 // stage table data can be accessed.
-package ods
+package openoffice
 
 import (
 	"bytes"
 	"encoding/xml"
 	"errors"
-	"github.com/knieriem/odf"
 	"io"
 	"strconv"
 	"strings"
@@ -15,23 +14,23 @@ import (
 
 type Doc struct {
 	XMLName xml.Name `xml:"document-content"`
-	Table   []Table  `xml:"body>spreadsheet>table"`
+	Sheets  []Sheet  `xml:"body>spreadsheet>table"`
 }
 
-type Table struct {
+type Sheet struct {
 	Name   string   `xml:"name,attr"`
 	Column []string `xml:"table-column"`
-	Row    []Row    `xml:"table-row"`
+	Rows   []Row    `xml:"table-row"`
 }
 
 type Row struct {
 	RepeatedRows int `xml:"number-rows-repeated,attr"`
 
-	Cell []Cell `xml:",any"` // use ",any" to match table-cell and covered-table-cell
+	Cells []Cell `xml:",any"` // use ",any" to match table-cell and covered-table-cell
 }
 
 func (r *Row) IsEmpty() bool {
-	for _, c := range r.Cell {
+	for _, c := range r.Cells {
 		if !c.IsEmpty() {
 			return false
 		}
@@ -42,23 +41,23 @@ func (r *Row) IsEmpty() bool {
 // Return the contents of a row as a slice of strings. Cells that are
 // covered by other cells will appear as empty strings.
 func (r *Row) Strings(b *bytes.Buffer) (row []string) {
-	n := len(r.Cell)
+	n := len(r.Cells)
 	if n == 0 {
 		return
 	}
 
 	// remove trailing empty cells
 	for i := n - 1; i >= 0; i-- {
-		if !r.Cell[i].IsEmpty() {
+		if !r.Cells[i].IsEmpty() {
 			break
 		}
 		n--
 	}
-	r.Cell = r.Cell[:n]
+	r.Cells = r.Cells[:n]
 
 	n = 0
 	// calculate the real number of cells (including repeated)
-	for _, c := range r.Cell {
+	for _, c := range r.Cells {
 		switch {
 		case c.RepeatedCols != 0:
 			n += c.RepeatedCols
@@ -69,7 +68,7 @@ func (r *Row) Strings(b *bytes.Buffer) (row []string) {
 
 	row = make([]string, n)
 	w := 0
-	for _, c := range r.Cell {
+	for _, c := range r.Cells {
 		cs := ""
 		if c.XMLName.Local != "covered-table-cell" {
 			cs = c.PlainText(b)
@@ -183,32 +182,32 @@ decode:
 	}
 }
 
-func (t *Table) Width() int {
+func (t *Sheet) Width() int {
 	return len(t.Column)
 }
-func (t *Table) Height() int {
-	return len(t.Row)
+func (t *Sheet) Height() int {
+	return len(t.Rows)
 }
-func (t *Table) Strings() (s [][]string) {
+func (t *Sheet) Strings() (s [][]string) {
 	var b bytes.Buffer
 
-	n := len(t.Row)
+	n := len(t.Rows)
 	if n == 0 {
 		return
 	}
 
 	// remove trailing empty rows
 	for i := n - 1; i >= 0; i-- {
-		if !t.Row[i].IsEmpty() {
+		if !t.Rows[i].IsEmpty() {
 			break
 		}
 		n--
 	}
-	t.Row = t.Row[:n]
+	t.Rows = t.Rows[:n]
 
 	n = 0
 	// calculate the real number of rows (including repeated rows)
-	for _, r := range t.Row {
+	for _, r := range t.Rows {
 		switch {
 		case r.RepeatedRows != 0:
 			n += r.RepeatedRows
@@ -219,7 +218,7 @@ func (t *Table) Strings() (s [][]string) {
 
 	s = make([][]string, n)
 	w := 0
-	for _, r := range t.Row {
+	for _, r := range t.Rows {
 		row := r.Strings(&b)
 		s[w] = row
 		w++
@@ -231,49 +230,50 @@ func (t *Table) Strings() (s [][]string) {
 	return
 }
 
-type File struct {
-	*odf.File
+type ODSFile struct {
+	*ODFFile
 }
 
 // Open an ODS file. If the file doesn't exist or doesn't look
 // like a spreadsheet file, an error is returned.
-func Open(fileName string) (*File, error) {
-	f, err := odf.Open(fileName)
+func OpenODS(fileName string) (*ODSFile, error) {
+	f, err := OpenODF(fileName)
 	if err != nil {
 		return nil, err
 	}
-	return newFile(f)
+	return newODSFile(f)
 }
 
 // NewReader initializes a File struct with an already opened
 // ODS file, and checks the spreadsheet's media type.
-func NewReader(r io.ReaderAt, size int64) (*File, error) {
-	f, err := odf.NewReader(r, size)
+func NewODSReader(r io.ReaderAt, size int64) (*ODSFile, error) {
+	f, err := NewODFReader(r, size)
 	if err != nil {
 		return nil, err
 	}
-	return newFile(f)
+	return newODSFile(f)
 }
 
-func newFile(f *odf.File) (*File, error) {
-	if f.MimeType != odf.MimeTypePfx+"spreadsheet" {
+func newODSFile(f *ODFFile) (*ODSFile, error) {
+	if f.MimeType != MimeTypePfx+"spreadsheet" {
 		f.Close()
 		return nil, errors.New("not a spreadsheet")
 	}
-	return &File{f}, nil
+	return &ODSFile{f}, nil
 }
 
 // Parse the content.xml part of an ODS file. On Success
 // the returned Doc will contain the data of the rows and cells
 // of the table(s) contained in the ODS file.
-func (f *File) ParseContent(doc *Doc) (err error) {
+func (f *ODSFile) ParseContent() (*Doc, error) {
 	content, err := f.Open("content.xml")
 	if err != nil {
-		return
+		return nil, err
 	}
 	defer content.Close()
 
 	d := xml.NewDecoder(content)
-	err = d.Decode(doc)
-	return
+	var doc Doc
+	err = d.Decode(&doc)
+	return &doc, err
 }
