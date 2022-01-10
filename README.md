@@ -1,6 +1,6 @@
-# odf/ods
+# go-openoffice
 
-This project uses Go's XML library to read OpenOffice spreadsheets.
+A Go library for reading OpenOffice/LibreOffice .ods (and .odf) files.
 
 ## Example
 
@@ -8,9 +8,14 @@ This project uses Go's XML library to read OpenOffice spreadsheets.
 package main
 
 import "fmt"
-import "github.com/multiprocessio/go-ods"
+import "github.com/multiprocessio/go-openoffice"
 
 func main() {
+  f, err := openoffice.NewODSReader("spreadsheet.ods")
+  if err != nil {
+    panic(err)
+  }
+
 
 }
 ```
