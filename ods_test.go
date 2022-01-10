@@ -35,7 +35,7 @@ func TestODSFile_ParseContent(t *testing.T) {
 		{"Cell with inline styles"},
 	}
 
-	for i, row := range doc.Table[0].Strings() {
+	for i, row := range doc.Sheets[0].Strings() {
 		assert.Equal(t, row, expected[i])
 	}
 }
