@@ -14,13 +14,13 @@ import (
 
 type Doc struct {
 	XMLName xml.Name `xml:"document-content"`
-	Sheets   []Sheet  `xml:"body>spreadsheet>table"`
+	Sheets  []Sheet  `xml:"body>spreadsheet>table"`
 }
 
 type Sheet struct {
 	Name   string   `xml:"name,attr"`
 	Column []string `xml:"table-column"`
-	Rows    []Row    `xml:"table-row"`
+	Rows   []Row    `xml:"table-row"`
 }
 
 type Row struct {
