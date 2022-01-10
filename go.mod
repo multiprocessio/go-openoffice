@@ -1,3 +1,3 @@
-module github.com/knieriem/odf
+module github.com/multiprocessio/odf
 
-go 1.13
+go 1.16
