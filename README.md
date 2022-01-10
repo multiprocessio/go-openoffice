@@ -8,7 +8,7 @@ This project uses Go's XML library to read OpenOffice spreadsheets.
 package main
 
 import "fmt"
-import "github.com/multiprocessio/odf/ods"
+import "github.com/multiprocessio/go-ods"
 
 func main() {
 

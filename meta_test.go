@@ -1,4 +1,4 @@
-package odf
+package openoffice
 
 import (
 	"fmt"
@@ -7,7 +7,7 @@ import (
 )
 
 func ExampleMetaTitle() {
-	f, err := Open("./ods/test.ods")
+	f, err := OpenODF("./testdata/test.ods")
 	if err != nil {
 		fmt.Fprintln(os.Stderr, err)
 		return

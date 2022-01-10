@@ -1,13 +1,12 @@
 // This package implements rudimentary support
 // for reading Open Document Spreadsheet files. At current
 // stage table data can be accessed.
-package ods
+package openoffice
 
 import (
 	"bytes"
 	"encoding/xml"
 	"errors"
-	"github.com/knieriem/odf"
 	"io"
 	"strconv"
 	"strings"
@@ -231,42 +230,42 @@ func (t *Table) Strings() (s [][]string) {
 	return
 }
 
-type File struct {
-	*odf.File
+type ODSFile struct {
+	*ODFFile
 }
 
 // Open an ODS file. If the file doesn't exist or doesn't look
 // like a spreadsheet file, an error is returned.
-func Open(fileName string) (*File, error) {
-	f, err := odf.Open(fileName)
+func OpenODS(fileName string) (*ODSFile, error) {
+	f, err := OpenODF(fileName)
 	if err != nil {
 		return nil, err
 	}
-	return newFile(f)
+	return newODSFile(f)
 }
 
 // NewReader initializes a File struct with an already opened
 // ODS file, and checks the spreadsheet's media type.
-func NewReader(r io.ReaderAt, size int64) (*File, error) {
-	f, err := odf.NewReader(r, size)
+func NewODSReader(r io.ReaderAt, size int64) (*ODSFile, error) {
+	f, err := NewODFReader(r, size)
 	if err != nil {
 		return nil, err
 	}
-	return newFile(f)
+	return newODSFile(f)
 }
 
-func newFile(f *odf.File) (*File, error) {
-	if f.MimeType != odf.MimeTypePfx+"spreadsheet" {
+func newODSFile(f *ODFFile) (*ODSFile, error) {
+	if f.MimeType != MimeTypePfx+"spreadsheet" {
 		f.Close()
 		return nil, errors.New("not a spreadsheet")
 	}
-	return &File{f}, nil
+	return &ODSFile{f}, nil
 }
 
 // Parse the content.xml part of an ODS file. On Success
 // the returned Doc will contain the data of the rows and cells
 // of the table(s) contained in the ODS file.
-func (f *File) ParseContent(doc *Doc) (err error) {
+func (f *ODSFile) ParseContent(doc *Doc) (err error) {
 	content, err := f.Open("content.xml")
 	if err != nil {
 		return

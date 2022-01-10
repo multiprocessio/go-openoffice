@@ -1,4 +1,4 @@
-package odf
+package openoffice
 
 import (
 	"archive/zip"
@@ -12,36 +12,36 @@ const (
 	MimeTypePfx = "application/vnd.oasis.opendocument."
 )
 
-type File struct {
+type ODFFile struct {
 	*zip.Reader
 	cl       io.Closer
 	MimeType string
 }
 
 // Open an OpenDocument file for reading, and check its MIME type.
-// The returned *File provides -- via its Open method -- access to
+// The returned *ODFFile provides -- via its Open method -- access to
 // files embedded in the ODF, like content.xml.
-func Open(odfName string) (*File, error) {
+func OpenODF(odfName string) (*ODFFile, error) {
 	z, err := zip.OpenReader(odfName)
 	if err != nil {
 		return nil, err
 	}
-	return newFile(&z.Reader, z)
+	return newODFFile(&z.Reader, z)
 }
 
 // NewReader initializes a File struct with an already opened ODF
-// file, and checks the file's MIME type. The returned *File provides
+// file, and checks the file's MIME type. The returned *ODFFile provides
 // access to files embedded in the ODF file, like content.xml.
-func NewReader(r io.ReaderAt, size int64) (*File, error) {
+func NewODFReader(r io.ReaderAt, size int64) (*ODFFile, error) {
 	z, err := zip.NewReader(r, size)
 	if err != nil {
 		return nil, err
 	}
-	return newFile(z, nil)
+	return newODFFile(z, nil)
 }
 
-func newFile(z *zip.Reader, closer io.Closer) (*File, error) {
-	f := new(File)
+func newODFFile(z *zip.Reader, closer io.Closer) (*ODFFile, error) {
+	f := new(ODFFile)
 	f.Reader = z
 	mf, err := f.Open("mimetype")
 	if err != nil {
@@ -68,14 +68,14 @@ func newFile(z *zip.Reader, closer io.Closer) (*File, error) {
 	return f, nil
 }
 
-func (f *File) Close() error {
+func (f *ODFFile) Close() error {
 	if f.cl == nil {
 		return nil
 	}
 	return f.cl.Close()
 }
 
-func (f *File) Open(name string) (io.ReadCloser, error) {
+func (f *ODFFile) Open(name string) (io.ReadCloser, error) {
 	for _, zf := range f.File {
 		if zf.Name == name {
 			return zf.Open()

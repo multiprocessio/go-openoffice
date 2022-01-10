@@ -1,4 +1,4 @@
-package ods
+package openoffice
 
 import (
 	"fmt"
@@ -10,7 +10,7 @@ import (
 func ExampleParseContent() {
 	var doc Doc
 
-	f, err := Open("./test.ods")
+	f, err := OpenODS("./testdata/test.ods")
 	if err != nil {
 		fmt.Fprintln(os.Stderr, err)
 		return
@@ -59,4 +59,5 @@ func ExampleParseContent() {
 }
 
 func TestDummy(_ *testing.T) {
+
 }
