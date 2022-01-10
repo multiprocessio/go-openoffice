@@ -35,6 +35,13 @@ func main() {
 }
 ```
 
+## Users
+
+This library is used by:
+
+* [DataStation](https://github.com/multiprocessio/datastation)
+* [dsq](https://github.com/multiprocessio/dsq)
+
 ## History
 
 This project is a fork of https://github.com/knieriem/odf.
